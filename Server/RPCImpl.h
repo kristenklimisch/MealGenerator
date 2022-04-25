@@ -81,6 +81,15 @@ private:
 	*/
 	bool ProcessMealRPC(vector<string>& arrayTokens);
 
+	/** Returns a buffer containing the information for the search meeting the client's 
+	input criteria. 
+
+	@pre RPCImpl object seeded and socket connection is live.
+	@post Buffer contains meals. 
+	@return true, RPC completed.
+	*/
+	bool ProcessSearchRPC(vector<string>& arrayTokens);
+
 	/** Adds a new Meal to the Meal Generator. Sends fail code in buffer if meal already exists. 
 
 	@pre RPCImpl object seeded and socket connection is live.
@@ -121,4 +130,10 @@ private:
 	*/
     void ParseTokens(char* buffer, vector<string>& a);
 
+	/** Concatenates search results into a string with delimiters. 
+	 
+	@param results, a vector of strings 
+	@return a concatenated string of the results with delimiters
+	*/
+	string JoinResults(vector<string> results);
 };

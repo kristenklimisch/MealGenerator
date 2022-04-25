@@ -36,15 +36,18 @@ CLI Window 1 - Build executables, Run Server:
 
 `/Client-Server-main $ cmake -S . -B build`
 
-`/Client-Server-main $ cmake -S . -B build`
 
 ![Imgur](https://i.imgur.com/0Xwm1LK.jpg)
 
 `/Client-Server-main $ cd build/Server`
 
+`/Client-Server-main/build/Server $ make Server`
+
 `/Client-Server-main/build/Server $ Server`
 
 CLI Window 2 - Run Client: 
+
+`/Client-Server-main/build/Client $ make Client`
 
 `/Client-Server-main/build/Client $ Client`
 
