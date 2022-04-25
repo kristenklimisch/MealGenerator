@@ -199,6 +199,7 @@ bool client::mealProcessing(int cliSocket, char* buffer, int valsend, int valrea
     while (!isValidUser) {
         int userSelection;
         string info;
+        string ingredients;
 
 		// Display options, prompt user, and store selection. 
         mealOptions();
@@ -227,16 +228,53 @@ bool client::mealProcessing(int cliSocket, char* buffer, int valsend, int valrea
             msg += toLowerCase(info) + ";";
             break;
         case 4:
+            msg = "search;ByName;";
+            cout << "Enter a search term: ";
+            cin >> info;
+            msg += toLowerCase(info) + ";";
+            break;
+        case 5:
+            msg = "search;ByCuisine;";
+            cout << "Enter a cuisine type: ";
+            cin >> info;
+            msg += toLowerCase(info) + ";";
+            break;
+        case 6:
+            msg = "search;ByTime;";
+            cout << "Enter a time of day (breakfast, lunch, dinner): ";
+            cin >> info;
+            msg += toLowerCase(info) + ";";
+            break;
+        case 7:
+            msg = "search;ByIngredient;";
+            cout << "Enter an ingredient: ";
+            cin >> info;
+            msg += toLowerCase(info) + ";";
+            break;
+        case 8:
             msg = "addMeal;";
             cout << "What is the name of the meal? ";
             cin >> info;
             msg += info + ";";
-            cout << "What is the time of the day for " + info;
+            cout << "What is the time of the day for " + info + "? ";
             cin >> info;
             msg += toLowerCase(info) + ";";
             cout << "Where does it originate from? ";
             cin >> info;
             msg += toLowerCase(info) + ";";
+
+            // multiple ingredients
+            while (true) {
+                cout << "Enter an ingredient or type submit when done: ";
+                cin >> info;
+                if (info == "submit") {
+                    break;
+                }
+                //todo input validation
+                ingredients += info + "|";
+            }
+            msg += toLowerCase(ingredients) + ";";
+            cout << "Submitting";
             break;
         default:
             isValidUser = !isValidUser;
@@ -245,7 +283,7 @@ bool client::mealProcessing(int cliSocket, char* buffer, int valsend, int valrea
         }
 
 		// For all valid selections, convert msg to buffer and send to server. 
-        if ((userSelection <= 4) && (userSelection >= 0)) {
+        if ((userSelection <= 8) && (userSelection >= 0)) {
             cout << endl;
             const char* curMsg = msg.c_str();
             strcpy(buffer, curMsg);
@@ -254,7 +292,7 @@ bool client::mealProcessing(int cliSocket, char* buffer, int valsend, int valrea
 			
             if (userSelection == 0) // Disconnect
                 cout << "Logout message sent.\n\n";
-            if (userSelection == 4)
+            if (userSelection == 8)
                 cout << "Your meal adding request has been sent.\n\n";
             else
                 cout << "Your meal request has been sent.\n\n";
@@ -270,13 +308,31 @@ bool client::mealProcessing(int cliSocket, char* buffer, int valsend, int valrea
             if (userSelection == 0)
                 cout << "You are logged out.\n\n";
             else {
-                if (userSelection != 4) {
+                if (userSelection != 8) {
 					// Buffer rec'd from server, display response. 
                     if (error_code == "successful") {
-                        string mealSuggestion = arrayTokens[INFOTOKEN];
+                        string response = arrayTokens[INFOTOKEN];
 
-                        cout << "The meal for you would be " << mealSuggestion << "!\n";
-                        cout << "Do you need another suggestion? 1 if so and 2 to logout: ";
+                        if ((userSelection <= 7) && (userSelection >= 4)) {
+                            int end = response.size();
+                            size_t from = 0;
+                            size_t to = -1;
+
+                            cout << "Your search returned the following meals: \n";
+                           
+                            while (from < end) {
+                                to = response.substr(from, end).find("|");
+                                if (to == -1) {
+                                    break;
+                                }
+                                cout << response.substr(from, to) + "\n";
+                                from += to+1;
+                            }
+                        } else {
+                            cout << "The meal for you would be " << response << "!\n";
+                        }
+
+                        cout << "Do you want to make another selection? 1 if so and 2 to logout: ";
                         cin >> userSelection;
 
                         // Disconnect. 
@@ -293,8 +349,13 @@ bool client::mealProcessing(int cliSocket, char* buffer, int valsend, int valrea
                             cout << "You are logged out.\n\n";
                         }
                     }
-                    else
-                        cout << "Invalid meal request. Please try again.\n\n";
+                    else {
+                        if ((userSelection <= 7) && (userSelection >= 4)) {
+                            cout << "No meals matching search criteria found.\n\n";
+                        } else {
+                            cout << "Invalid meal request. Please try again.\n\n";
+                        }
+                    }
                 }
                 else {
                     if (error_code == "successful")
@@ -309,7 +370,7 @@ bool client::mealProcessing(int cliSocket, char* buffer, int valsend, int valrea
 
 void client::welcome() {
 	string msg = "Welcome to the Client-Server Meal Generator! \nThis program will pass your requests about food\n" 
-		"to and from the client and server to fetch you a\ndelicious meal idea!\n";
+		"to and from the client and server to fetch you \ndelicious meal ideas!\n";
 	cout << msg << "\n";
 }
 
@@ -322,11 +383,16 @@ void client::optionList() {
 }
 
 void client::mealOptions() {
-    cout << "What kind of meal are you looking for? 0 to Logout\n";
-    cout << "1. A random meal\n";
-    cout << "2. A meal by time\n";
-    cout << "3. A meal by cuisine\n";    
-    cout << "4. Perhaps you want to add a meal by yourself?\n";
+    cout << "What would you like to do?\n";
+    cout << "0. Logout\n";
+    cout << "1. Get a random meal\n";
+    cout << "2. Get a random meal by time\n";
+    cout << "3. Get a random meal by cuisine\n";
+    cout << "4. Search meals by name.\n";
+    cout << "5. Search meals by cuisine.\n";
+    cout << "6. Search meals by time.\n";
+    cout << "7. Search meals by ingredient.\n";
+    cout << "8. Add a meal to the list of meals?\n";
 }
 
 void client::parseTokens(char* buffer, std::vector<std::string>& a) {

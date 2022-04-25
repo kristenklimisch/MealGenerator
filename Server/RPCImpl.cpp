@@ -54,14 +54,15 @@ RPCImpl::~RPCImpl() {};
 bool RPCImpl::ProcessRPC()
 {
 	// List of valid RPC codes that ProcessRPC will recognize. 
-	const vector<string> RPCList = { "signup", "connect", "logout", "disconnect", "status", "meal", "addMeal"};
+	const vector<string> RPCList = { "signup", "connect", "logout", "disconnect", "status", "meal", "search", "addMeal"};
 	const string SIGNUP = RPCList[0];
 	const string CONNECT = RPCList[1];
 	const string LOGOUT = RPCList[2];
 	const string DISCONNECT = RPCList[3];
 	const string STATUS = RPCList[4];
 	const string MEAL = RPCList[5];
-	const string ADDMEAL = RPCList[6];
+	const string SEARCH = RPCList[6];
+	const string ADDMEAL = RPCList[7];
 	
 	/* 
 	Holds tokenized form of buffer in the formats: 
@@ -150,6 +151,14 @@ bool RPCImpl::ProcessRPC()
 		else if ((bConnected == true) && (aString == MEAL)) {
 			bStatusOk = ProcessMealRPC(arrayTokens);  
 
+			sem_wait(updateGC);
+			gc->incRPC();
+			sem_post(updateGC);
+		}
+
+		// Search Meals RPC - call ProcessSearchRPC when connected and RPCToken is "search". 
+		else if ((bConnected == true) && (aString == SEARCH)) {
+			bStatusOk = ProcessSearchRPC(arrayTokens);  
 			sem_wait(updateGC);
 			gc->incRPC();
 			sem_post(updateGC);
@@ -284,22 +293,99 @@ bool RPCImpl::ProcessMealRPC(vector<string>& arrayTokens)
 	return true; // RPC complete. 
 }
 
+bool RPCImpl::ProcessSearchRPC(vector<string>& arrayTokens)
+{
+	const int RPCTOKEN = 1;           // "ByName", "ByTime", "ByCuisine", "ByIngredient". 
+	const int INFOTOKEN = 2;          
+	vector<string> results;           // Holds results from Meal Generator object class function. 
+	string output;                    // Holds joined output from search results. 
+	string error;                     // Holds error message to be copied to socket. 
+	char szBuffer[1024];              // Holds the output buffer
+
+	// Strip out tokens 1 and 2 (username, password).
+	string RPC = arrayTokens[RPCTOKEN];
+	string info = arrayTokens[INFOTOKEN];
+
+	// Searches meals name, time, cuisine, or ingredient from Meal Generator object, copies results to buffer. 
+	// If no output, copies error message to buffer. 
+	if (RPC == "ByName") {
+		results = mg->searchMealsByName(info);
+		if (results.size() > 0) {
+			output = RPCImpl::JoinResults(results); 
+			strcpy(szBuffer, (SUCCESSCODE + output).c_str());
+		} else {
+			strcpy(szBuffer, "failed;Meal List is empty;");
+		}
+	}
+	else if (RPC == "ByTime") {
+		results = mg->searchMealsByTime(info);
+		if (results.size() > 0) {
+			output = RPCImpl::JoinResults(results); 
+			strcpy(szBuffer, (SUCCESSCODE + output).c_str());
+		} else {
+			strcpy(szBuffer, "failed;Meal List is empty;");
+		}
+	}
+	else if (RPC == "ByCuisine") {
+		results = mg->searchMealsByCuisine(info);
+		if (results.size() > 0) {
+			output = RPCImpl::JoinResults(results); 
+			strcpy(szBuffer, (SUCCESSCODE + output).c_str());
+		} else {
+			strcpy(szBuffer, "failed;Meal List is empty;");
+		}
+	}
+	else if (RPC == "ByIngredient") {
+		results = mg->searchMealsByIngredient(info);
+		if (results.size() > 0) {
+			output = RPCImpl::JoinResults(results);
+			strcpy(szBuffer, (SUCCESSCODE + output).c_str());
+		} else {
+			strcpy(szBuffer, "failed;Meal List is empty;");
+		}
+	}
+	else
+		strcpy(szBuffer, "failed;Invalid Argument, or Operation Not Supported;");
+
+	int nlen = strlen(szBuffer);
+	szBuffer[nlen] = 0;
+	send(this->m_socket, szBuffer, strlen(szBuffer) + 1, 0);
+
+	return true; // RPC complete. 
+}
+
 bool RPCImpl::ProcessAddMealRPC(vector<string>& arrayTokens)
 {
 	const int NAMETOKEN = 1;
 	const int TIMETOKEN = 2;
 	const int CUISINETOKEN = 3;
+	const int INGREDIENTSTOKEN = 4;
 
 	// Strip out tokens 1 and 2 (username, password).
 	string name = arrayTokens[NAMETOKEN];
 	string time = arrayTokens[TIMETOKEN];
 	string cuisine = arrayTokens[CUISINETOKEN];
+	string ingredients = arrayTokens[INGREDIENTSTOKEN];
 	char szBuffer[80];
 
 	sem_wait(updateMG);
+	
+	vector<string> ingredientsVector = {};
+	int end = ingredients.size();
+	size_t from = 0;
+	size_t to = -1;
+
+	while (from < end) {
+		to = ingredients.substr(from, end).find("|");
+		if (to == -1) {
+			break;
+		}
+		ingredientsVector.push_back(ingredients.substr(from, to));
+		from += to+1;
+	}
 
 	// Attempt to add new meal to Meal Generator class 
-	if(!(mg->addMeal(name, time, cuisine)))  // Meal already exists in MG. 
+	if(!(mg->addMeal(name, time, cuisine, ingredientsVector)))  // Meal already exists in MG. 
 		strcpy(szBuffer, FAILCODE);
 	else
 		strcpy(szBuffer,SUCCESSCODE);        // New meal added. 
@@ -359,4 +445,12 @@ void RPCImpl::ParseTokens(char* buffer, vector<string>& a)
 	printf("\n");
 
 	return;
+}
+
+string RPCImpl::JoinResults(vector<string> results) {
+	string output = "";
+	for (int i = 0; i < results.size(); i++) {
+		output += results.at(i) + "|";
+    }
+	return output;
 }

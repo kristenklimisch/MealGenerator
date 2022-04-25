@@ -12,10 +12,11 @@ Meal::Meal() {};
 
 Meal::~Meal() {};
 
-Meal::Meal(string n, string t, string c) {
+Meal::Meal(string n, string t, string c, vector<string> i) {
 	name = n;
 	time = t;
 	cuisine = c;
+	ingredients = i; 
 }
 
 string Meal::getName() {
@@ -30,9 +31,6 @@ string Meal::getCuisine() {
 	return cuisine;
 }
 
-
-
-
-
-
-
+vector<string> Meal::getIngredients() {
+	return ingredients;
+}

@@ -30,7 +30,7 @@ public:
 		@param cuisine, the type of cuisine for the meal
 		@return true, if meal did not already exist in Meal Generator. Else, false. 
 		*/
-		bool addMeal(string, string, string);
+		bool addMeal(string, string, string, vector<string>);
 
 		/** Returns the name of random meal from the list of meals in Meal Generator.
 
@@ -51,10 +51,46 @@ public:
 		the cuisine type from the input parameter, or returns a statement saying that there
 		were no meals with the cuisine type from the input parameter.
 
-		@param cuisine, thecuisine type of the meal.
+		@param cuisine, the cuisine type of the meal.
 		@return name, name of the random meal.
 		*/
 		string getRandomMealByCuisine(string);
+
+		/** Returns the names of all meals in the in Meal Generator with names
+		containing the search term entered, or returns a statement saying that
+		there were no results matching the search criteria.
+
+		@param term, the search term.
+		@return names, names of matching meals.
+		*/
+		vector<string> searchMealsByName(string);
+
+		/** Returns the names of all meals in the in Meal Generator with time
+		matching the time entered, or returns a statement saying that
+		there were no results matching the search criteria.
+
+		@param time, the time when the meal is eaten (breakfast, lunch, or dinner).
+		@return names, names of matching meals.
+		*/
+		vector<string> searchMealsByTime(string);
+
+		/** Returns the names of all meals in the in Meal Generator with 
+		cuisine matching the cuisine entered, or returns a statement saying that
+		there were no results matching the search criteria.
+
+		@param cuisine, the cuisine type of the meal.
+		@return names, names of matching meals.
+		*/
+		vector<string> searchMealsByCuisine(string);
+
+		/** Returns the names of all meals in the in Meal Generator with an ingredient
+		matching the search ingredient, or returns a statement saying that
+		there were no results matching the search criteria.
+
+		@param ingredient, the search ingredient.
+		@return names, names of matching meals.
+		*/
+		vector<string> searchMealsByIngredient(string);
 
 		/** Returns the current TIMES vector. 
 
@@ -88,4 +124,12 @@ private:
 	@return int, random number between 1 and size of the Meal vector.
 	*/
 	int randomize(int);
+
+	/**
+	 * Utility function to convert strings into all lowercase characters. 
+	 * 
+	 * @param s, a string input parameter
+	 * @return string with all lowercase characters
+	 */
+	string toLowerCase(string s);
 };

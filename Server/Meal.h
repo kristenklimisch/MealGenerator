@@ -7,6 +7,7 @@
  */
 #pragma once
 #include <string>
+#include <vector>
 
 using namespace std;
 
@@ -16,6 +17,7 @@ private:
 	string name;
 	string cuisine;
 	string time;
+	vector<string> ingredients;
 
 public:
 	Meal();
@@ -28,7 +30,7 @@ public:
 	            the time when the meal is eaten (breakfast, lunch, or dinner)
 				the type of cuisine for the meal            
 	*/
-	Meal(string name, string cuisine, string time);
+	Meal(string name, string cuisine, string time, vector<string> ingredients);
 
 	/*
 	Function:   getName
@@ -47,6 +49,12 @@ public:
 	Returns:    the cuisine type for the meal.
 	*/
 	string getTime();
+
+	/*
+	Function:   getIngredients
+	Returns:    the ingredients for the meal.
+	*/
+	vector<string> getIngredients();
 
 };
 
